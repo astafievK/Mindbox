@@ -44,14 +44,13 @@ function registration(
     $response = curl_exec($ch);
     curl_close($ch);
     $responseData = json_decode($response, true);
-    $returnValue = null;
 
     if (isset($responseData['status'])) {
         if ($responseData['status'] === 'ValidationError') {
             if (!empty($responseData['validationMessages']) && isset($responseData['validationMessages'][0]['message'])) {
                 $returnValue = $responseData['validationMessages'][0]['message'];
             } else {
-                print_r($responseData);
+                $returnValue = $responseData;
             }
         } else {
             $returnValue = "Учетная запись успешно создана";
