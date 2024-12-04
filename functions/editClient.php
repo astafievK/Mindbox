@@ -1,27 +1,27 @@
 <?php
 
+require 'vendor/autoload.php';
+
+use Ramsey\Uuid\Uuid;
+
 include "src/settings.php";
 include "src/headersJSON.php";
 
-// Клиент пришел на встречу
-function clientMeeting($userId, $type = 'default')
-{
+function editClient($userId){
     global $headers;
     global $endpointId;
 
-    $url = match ($type) {
-        'default' => "https://api.mindbox.ru/v3/operations/sync?endpointId=$endpointId&operation=SetClientActionMeeting",
-        '1c' => "https://api.mindbox.ru/v3/operations/sync?endpointId=$endpointId&operation=SetClientActionMeeting1C",
-        'trade-in' => "https://api.mindbox.ru/v3/operations/sync?endpointId=$endpointId&operation=SetClientActionMeetingTradeIn",
-        default => throw new Exception("Некорректный тип встречи"),
-    };
+    $url = "https://api.mindbox.ru/v3/operations/sync?endpointId=$endpointId&operation=EditClient";
 
     $data = [
         "customer" => [
             "ids" => [
                 "mindboxId" => $userId
+            ],
+            "customFields" => [
+                "clientUUID" => "001dcac6-aa1f-11ee-80ea-101f742f15e2",
             ]
-        ]
+        ],
     ];
 
     $ch = curl_init();
