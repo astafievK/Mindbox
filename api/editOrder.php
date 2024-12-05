@@ -4,10 +4,10 @@ require 'vendor/autoload.php';
 
 use Ramsey\Uuid\Uuid;
 
-include "src/settings.php";
-include "src/headersJSON.php";
+include "config/settings.php";
+include "config/headersJSON.php";
 
-function editOrder($userId, $orderId, $externalOrderId){
+function editOrder($clientId, $orderId, $externalOrderId){
     global $headers;
     global $endpointId;
 
@@ -22,7 +22,7 @@ function editOrder($userId, $orderId, $externalOrderId){
     $data = [
         "customer" => [
             "ids" => [
-                "mindboxId" => $userId
+                "mindboxId" => $clientId
             ]
         ],
         "order" => [
@@ -65,5 +65,5 @@ function editOrder($userId, $orderId, $externalOrderId){
 
     curl_close($ch);
 
-    return $response;
+    return json_decode($response, true);
 }

@@ -4,17 +4,19 @@ require 'vendor/autoload.php';
 
 use Ramsey\Uuid\Uuid;
 
-include "src/settings.php";
-include "src/headersJSON.php";
+include "config/settings.php";
+include "config/headersJSON.php";
+include "config/dictionaries.php";
 
 function createOrder($userId){
     global $headers;
     global $endpointId;
+    global $orderStatuses;
 
     try {
         $transactionId = Uuid::uuid4()->toString();
     } catch (Exception $e) {
-        echo "Ошибка создания UUID: " . $e->getMessage();
+        die("Ошибка создания UUID: ". $e->getMessage());
     }
 
     $url = "https://api.mindbox.ru/v3/operations/sync?endpointId=$endpointId&operation=CreateOrder&transactionId=$transactionId";
@@ -28,7 +30,7 @@ function createOrder($userId){
         "order" => [
             "ids" => [
                 "websiteId" => "1488",
-                "externalOrderId" => "1488",
+                "externalOrderId" => "152",
             ],
             "lines" => [
                 [
@@ -46,21 +48,9 @@ function createOrder($userId){
                         ]
                     ]
                 ],
-                [
-                    "basePricePerItem" => "3000000",
-                    "quantity" => "1",
-                    "lineNumber" => "2",
-                    "product" => [
-                        "ids" => [
-                            "c1" => "1",
-                        ]
-                    ],
-                    "status" => [
-                        "ids" => [
-                            "externalId" => "OrderLineClientIsInterested"
-                        ]
-                    ]
-                ]
+            ],
+            "customFields" => [
+                "orderStatus" => $orderStatuses["1"]
             ]
         ],
     ];

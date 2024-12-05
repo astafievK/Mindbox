@@ -1,7 +1,7 @@
 <?php
 
-include "src/settings.php";
-include "src/headersCSV.php";
+include "config/settings.php";
+include "config/headersCSV.php";
 
 function importActionsCSV()
 {
@@ -33,5 +33,5 @@ function importActionsCSV()
 
     curl_close($ch);
 
-    return $response;
+    return json_decode($response, true);
 }

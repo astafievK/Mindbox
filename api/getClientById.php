@@ -2,10 +2,10 @@
 
 // Получение пользователя по Mindbox Id
 
-include "src/settings.php";
-include "src/headersJSON.php";
+include "config/settings.php";
+include "config/headersJSON.php";
 
-function getUserById($userId){
+function getClientById($clientId){
     global $headers;
     global $endpointId;
 
@@ -14,7 +14,7 @@ function getUserById($userId){
     $data = [
         "customer" => [
             "ids" => [
-                "mindboxId" => $userId
+                "mindboxId" => $clientId
             ],
         ],
     ];
@@ -33,5 +33,5 @@ function getUserById($userId){
     $response = curl_exec($ch);
     curl_close($ch);
 
-    return $response;
+    return json_decode($response, true);
 }

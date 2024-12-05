@@ -4,24 +4,32 @@ require 'vendor/autoload.php';
 
 use Ramsey\Uuid\Uuid;
 
-include "src/settings.php";
-include "src/headersJSON.php";
+include "config/settings.php";
+include "config/headersJSON.php";
 
-function editClient($userId){
+function getOrderById($clientId, $orderId){
     global $headers;
     global $endpointId;
 
-    $url = "https://api.mindbox.ru/v3/operations/sync?endpointId=$endpointId&operation=EditClient";
+    try {
+        $transactionId = Uuid::uuid4()->toString();
+    } catch (Exception $e) {
+        echo "Ошибка создания UUID: " . $e->getMessage();
+    }
+
+    $url = "https://api.mindbox.ru/v3/operations/sync?endpointId=$endpointId&operation=getOrderById&transactionId=$transactionId";
 
     $data = [
         "customer" => [
             "ids" => [
-                "mindboxId" => $userId
-            ],
-            "customFields" => [
-                "clientUUID" => "001dcac6-aa1f-11ee-80ea-101f742f15e2",
+                "mindboxId" => $clientId
             ]
         ],
+        "order" => [
+            "ids" => [
+                "mindboxId" => $orderId,
+            ],
+        ]
     ];
 
     $ch = curl_init();
@@ -43,5 +51,5 @@ function editClient($userId){
 
     curl_close($ch);
 
-    return $response;
+    return json_decode($response, true);
 }

@@ -1,25 +1,33 @@
 <?php
 
-include "src/settings.php";
-include "src/headersJSON.php";
+require 'vendor/autoload.php';
 
-// Клиент пришел на встречу
-function clientMeeting($userId, $type = 'default')
-{
+use Ramsey\Uuid\Uuid;
+
+include "config/settings.php";
+include "config/headersJSON.php";
+include "config/dictionaries.php";
+
+function editClientStatusInOrder($orderId, $statusId){
     global $headers;
     global $endpointId;
+    global $clientStatusesInOrder;
 
-    $url = match ($type) {
-        'default' => "https://api.mindbox.ru/v3/operations/sync?endpointId=$endpointId&operation=SetClientActionMeeting",
-        '1c' => "https://api.mindbox.ru/v3/operations/sync?endpointId=$endpointId&operation=SetClientActionMeeting1C",
-        'trade-in' => "https://api.mindbox.ru/v3/operations/sync?endpointId=$endpointId&operation=SetClientActionMeetingTradeIn",
-        default => throw new Exception("Некорректный тип встречи"),
-    };
+    try {
+        $transactionId = Uuid::uuid4()->toString();
+    } catch (Exception $e) {
+        die("Ошибка создания UUID: ". $e->getMessage());
+    }
+
+    $url = "https://api.mindbox.ru/v3/operations/sync?endpointId=$endpointId&operation=editOrder&transactionId=$transactionId";
 
     $data = [
-        "customer" => [
+        "order" => [
             "ids" => [
-                "mindboxId" => $userId
+                "mindboxId" => $orderId,
+            ],
+            "customFields" => [
+                "orderClientStatus" => $clientStatusesInOrder[$statusId],
             ]
         ]
     ];

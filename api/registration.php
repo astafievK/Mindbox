@@ -2,8 +2,8 @@
 
 // Регистрация пользователя
 
-include "src/settings.php";
-include "src/headersJSON.php";
+include "config/settings.php";
+include "config/headersJSON.php";
 
 function registration(
     $email,
@@ -12,7 +12,8 @@ function registration(
     $lastName = null,
     $middleName = null,
     $password = null,
-    ): string {
+    ): string
+{
 
     global $headers;
     global $endpointId;
@@ -43,21 +44,21 @@ function registration(
 
     $response = curl_exec($ch);
     curl_close($ch);
-    $responseData = json_decode($response, true);
+//    $responseData = json_decode($response, true);
 
-    if (isset($responseData['status'])) {
-        if ($responseData['status'] === 'ValidationError') {
-            if (!empty($responseData['validationMessages']) && isset($responseData['validationMessages'][0]['message'])) {
-                $returnValue = $responseData['validationMessages'][0]['message'];
-            } else {
-                $returnValue = $responseData;
-            }
-        } else {
-            $returnValue = "Учетная запись успешно создана";
-        }
-    } else {
-        $returnValue = "Ошибка: Ответ сервера не содержит статус.";
-    }
+//    if (isset($responseData['status'])) {
+//        if ($responseData['status'] === 'ValidationError') {
+//            if (!empty($responseData['validationMessages']) && isset($responseData['validationMessages'][0]['message'])) {
+//                $returnValue = $responseData['validationMessages'][0]['message'];
+//            } else {
+//                $returnValue = $responseData;
+//            }
+//        } else {
+//            $returnValue = "Учетная запись успешно создана";
+//        }
+//    } else {
+//        $returnValue = "Ошибка: Ответ сервера не содержит статус.";
+//    }
 
-    return $returnValue;
+    return json_decode($response, true);
 }
