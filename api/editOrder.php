@@ -1,49 +1,36 @@
 <?php
 
-require 'vendor/autoload.php';
-
-use Ramsey\Uuid\Uuid;
-
 include "config/settings.php";
 include "config/headersJSON.php";
 
-function editOrder($clientId, $orderId, $externalOrderId){
+function editOrder($clientData, $orderMindboxId){
     global $headers;
     global $endpointId;
 
-    try {
-        $transactionId = Uuid::uuid4()->toString();
-    } catch (Exception $e) {
-        echo "Ошибка создания UUID: " . $e->getMessage();
-    }
+    $url = "https://api.mindbox.ru/v3/operations/sync?endpointId=$endpointId&operation=editOrder";
 
-    $url = "https://api.mindbox.ru/v3/operations/async?endpointId=$endpointId&operation=editOrder&transactionId=$transactionId";
+    $date = $clientData['ДатаСобытия'];
+    $time = $clientData['ВремяСобытия'];
+    $completeDateTimeUtc = formatDateTime($date, $time);
 
     $data = [
         "customer" => [
-            "ids" => [
-                "mindboxId" => $clientId
-            ]
+            "mobilePhone" => $clientData['Телефон'],
         ],
+        "executionDateTimeUtc" => "$completeDateTimeUtc",
         "order" => [
             "ids" => [
-                "mindboxId" => $orderId,
-                "externalOrderId" =>  $externalOrderId
+                "externalOrderId" => $clientData['РабочийЛист'],
+                "mindboxId" => $orderMindboxId
             ],
-            "lines" => [
-                [
-                    "discountedPriceOfLine" => "3750000",
-                    "quantity" => "1",
-                    "lineNumber" => "1",
-                    "status" => "OrderTraffic",
-                    "product" => [
-                        "ids" => [
-                            "c1" => "1488"
-                        ]
-                    ]
-                ]
+            "lines" => createLines(getActionsByUid($clientData['РабочийЛист'])),
+            "customFields" => [
+                "orderStatus" => $clientData['РабочийЛистСтатус'],
+                "workSheetUID" => $clientData['РабочийЛист'],
+                "orderEventType" => $clientData['ВидСобытия'],
+                "orderOrganization" => $clientData['Организация']
             ]
-        ]
+        ],
     ];
 
     $ch = curl_init();
@@ -57,7 +44,7 @@ function editOrder($clientId, $orderId, $externalOrderId){
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
     curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
 
-    $response = curl_exec($ch);
+    $response = json_decode(curl_exec($ch), true);
 
     if (curl_errno($ch)) {
         throw new Exception("Ошибка запроса: " . curl_error($ch));
@@ -65,5 +52,9 @@ function editOrder($clientId, $orderId, $externalOrderId){
 
     curl_close($ch);
 
-    return json_decode($response, true);
+    if ($response['status'] != 'Success') {
+        return "Ошибка обновления заказа\n";
+    } else {
+        return "Заказ обновлен\n";
+    }
 }

@@ -6,12 +6,14 @@ use Ramsey\Uuid\Uuid;
 
 include "config/settings.php";
 include "config/headersJSON.php";
-include "config/dictionaries.php";
+include "queries/getActionsByUid.php";
+include "utils/createLines.php";
+include "utils/checkOrderAlreadyExists.php";
+include "api/editOrder.php";
 
-function createOrder($userId){
+function createOrder($clientData, $allClientOrders){
     global $headers;
     global $endpointId;
-    global $orderStatuses;
 
     try {
         $transactionId = Uuid::uuid4()->toString();
@@ -21,36 +23,32 @@ function createOrder($userId){
 
     $url = "https://api.mindbox.ru/v3/operations/sync?endpointId=$endpointId&operation=CreateOrder&transactionId=$transactionId";
 
+    $date = $clientData['ДатаСобытия'];
+    $time = $clientData['ВремяСобытия'];
+    $completeDateTimeUtc = formatDateTime($date, $time);
+
+    $mindboxId = checkOrderAlreadyExists($clientData['РабочийЛист'], $allClientOrders);
+    
+    if(isset($mindboxId)){
+        echo editOrder($clientData, $mindboxId);
+        return;
+    }
+
     $data = [
         "customer" => [
-            "ids" => [
-                "mindboxId" => $userId
-            ]
+            "mobilePhone" => $clientData['Телефон'],
         ],
+        "executionDateTimeUtc" => "$completeDateTimeUtc",
         "order" => [
             "ids" => [
-                "websiteId" => "1488",
-                "externalOrderId" => "152",
+                "externalOrderId" => $clientData['РабочийЛист'],
             ],
-            "lines" => [
-                [
-                    "basePricePerItem" => "3750000",
-                    "quantity" => "1",
-                    "lineNumber" => "1",
-                    "product" => [
-                        "ids" => [
-                            "c1" => "1",
-                        ]
-                    ],
-                    "status" => [
-                        "ids" => [
-                            "externalId" => "OrderLineClientIsInterested"
-                        ]
-                    ]
-                ],
-            ],
+            "lines" => createLines(getActionsByUid($clientData['РабочийЛист'])),
             "customFields" => [
-                "orderStatus" => $orderStatuses["1"]
+                "orderStatus" => $clientData['РабочийЛистСтатус'],
+                "workSheetUID" => $clientData['РабочийЛист'],
+                "orderEventType" => $clientData['ВидСобытия'],
+                "orderOrganization" => $clientData['Организация']
             ]
         ],
     ];
@@ -66,7 +64,7 @@ function createOrder($userId){
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
     curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
 
-    $response = curl_exec($ch);
+    $response = json_decode(curl_exec($ch), true);
 
     if (curl_errno($ch)) {
         throw new Exception("Ошибка запроса: " . curl_error($ch));
@@ -74,5 +72,9 @@ function createOrder($userId){
 
     curl_close($ch);
 
-    return $response;
+    if ($response['status'] != 'Success') {
+        return "Ошибка добавления заказа";
+    } else {
+        echo "Заказ добавлен/обновлен\n";
+    }
 }

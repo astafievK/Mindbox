@@ -6,15 +6,11 @@ include "config/settings.php";
 include "config/headersJSON.php";
 
 function registration(
-    $email,
     $phoneNumber,
-    $firstName = null,
-    $lastName = null,
-    $middleName = null,
-    $password = null,
-    ): string
+    $email,
+    $fullName
+): string
 {
-
     global $headers;
     global $endpointId;
 
@@ -22,12 +18,9 @@ function registration(
 
     $data = [
         "customer" => [
-            "lastName" => $lastName,
-            "firstName" => $firstName,
-            "middleName" => $middleName,
             "mobilePhone" => $phoneNumber,
-            "email" => $email,
-            "password" => $password,
+            "fullName" => $fullName,
+            "email" => $email
         ],
     ];
 
@@ -43,22 +36,21 @@ function registration(
     curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
 
     $response = curl_exec($ch);
+
+    if (curl_errno($ch)) {
+        throw new Exception("Ошибка запроса: " . curl_error($ch));
+    }
+
     curl_close($ch);
-//    $responseData = json_decode($response, true);
 
-//    if (isset($responseData['status'])) {
-//        if ($responseData['status'] === 'ValidationError') {
-//            if (!empty($responseData['validationMessages']) && isset($responseData['validationMessages'][0]['message'])) {
-//                $returnValue = $responseData['validationMessages'][0]['message'];
-//            } else {
-//                $returnValue = $responseData;
-//            }
-//        } else {
-//            $returnValue = "Учетная запись успешно создана";
-//        }
-//    } else {
-//        $returnValue = "Ошибка: Ответ сервера не содержит статус.";
-//    }
-
-    return json_decode($response, true);
+    if (is_string($response)) {
+        $response = json_decode($response, true); // Преобразуем строку в ассоциативный массив
+    }
+    
+    if ($response['status'] == 'ValidationError') {
+        $errorMessage = isset($response['validationMessages'][0]['message']) ? $response['validationMessages'][0]['message'] : 'Неизвестная ошибка';
+        return "Ошибка добавления [$fullName]: $errorMessage";
+    } else {
+        return "Пользователь $fullName ($phoneNumber) зарег-ан";
+    }
 }
